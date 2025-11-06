@@ -1,80 +1,68 @@
-NebulaBoard
+🚀 NebulaBoard – Full-Stack Kanban Task Management System
 
-A Full-Stack Kanban Project Management System (Spring Boot + React)
+📌 A clean, modern Kanban-style project management application built with React (Vite) + Spring Boot + PostgreSQL, featuring JWT Authentication, role-based access, and smart task workflows.
 
-NebulaBoard is a modern, lightweight Trello-style project management tool built using React (Vite) for the frontend and Spring Boot for the backend.
-It supports user authentication, task tracking, project boards, admin controls, and real-time updates.
+📘 Overview
 
+NebulaBoard is a full-stack Kanban Task Management System that allows users to create projects, manage tasks visually, assign priorities, track deadlines, and move work through “To-Do → In-Progress → Done” stages.
 
-✅ Features
-🔐 Authentication & Security
+It also includes Admin controls, user authentication, protected routes, CSV export, and a fully responsive UI.
+
+⚙️ Features
+✅ Authentication & Security
 
 JWT-based Login & Registration
 
-Admin & User Roles
+Admin & User roles
 
-Protected Routes (Frontend)
+Protected routes (frontend)
 
-Authentication Middleware
+Authentication middleware
 
+✅ Project & Task Management
 
+Create, update, delete projects
 
-🗂 Project & Task Management
+Add tasks with:
 
-Create, view, edit & delete projects
+Title
 
-Kanban-style task columns: To Do → In Progress → Done
+Description
 
-Drag-and-Drop (frontend ready)
+Priority (LOW / MEDIUM / HIGH)
 
-Task updates stored in database
+Assignee
 
-User-specific boards
+Due date
 
+Move tasks between statuses
 
+Edit or delete tasks
 
-🛠 Admin Panel
+View task alerts:
 
-View all users
+✅ Due Soon
 
-Manage all projects
+❌ Overdue
 
-View analytics for tasks & activity
+✅ Admin Dashboard
 
+Manage all users
 
+View global statistics
 
-🎨 Frontend (React + Vite)
+Access all projects
 
-Beautiful clean UI
+✅ Extra Utilities
 
-Responsive layout
+Export tasks to CSV
 
-Modern CSS styles
+Sorting by date & priority
 
-API service layer with Axios
+Clean, modern UI layout
 
-Context-based Auth state
-
-
-
-⚙ Backend (Spring Boot)
-
-REST APIs
-
-JPA + Hibernate
-
-Secure password hashing
-
-Service-layer architecture
-
-Exception handlers
-
-Modular and scalable structure
-
-
-
-🧱 Tech Stack
-Frontend:
+🛠️ Tech Stack
+Frontend
 
 React (Vite)
 
@@ -82,13 +70,13 @@ Axios
 
 React Router
 
-Context API
+Context API (Auth)
 
-Modern CSS
+CSS (Custom styles)
 
-Backend:
+Backend
 
-Java 17
+Java 17+
 
 Spring Boot
 
@@ -96,73 +84,47 @@ Spring Security (JWT)
 
 Spring Data JPA
 
-MySQL / PostgreSQL
+PostgreSQL
 
 Maven
 
-
-
 📁 Project Structure
 NebulaBoard/
-│── backend/               # Spring Boot backend
-│   ├── src/main/java/
-│   ├── src/main/resources/
-│   ├── pom.xml
-│
-└── frontend/              # React + Vite frontend
-    ├── src/
-    ├── public/
-    ├── package.json
+ ├── backend/          # Spring Boot API
+ │   ├── controller/
+ │   ├── service/
+ │   ├── repository/
+ │   ├── model/
+ │   └── security/
+ │
+ └── frontend/         # React + Vite app
+     ├── src/pages/
+     ├── src/components/
+     ├── src/context/
+     ├── src/layout/
+     └── src/styles/
 
+🚀 How to Run the Project
+✅ 1️⃣ Clone the repository
+git clone https://github.com/Alannobl/Nebulaboard.git
 
-
-🚀 Running the Backend (Spring Boot)
-1️⃣ Navigate to backend folder
+✅ 2️⃣ Backend Setup (Spring Boot)
 cd backend
-
-2️⃣ Configure Database
-
-Edit:
-
-src/main/resources/application.properties
-
-3️⃣ Run the backend
+mvn clean install
 mvn spring-boot:run
 
 
+Make sure PostgreSQL is running and update DB credentials in:
+backend/src/main/resources/application.properties
 
-Backend runs at:
-
-👉 http://localhost:8080
-
-🚀 Running the Frontend (React + Vite)**
-1️⃣ Go to frontend folder
+✅ 3️⃣ Frontend Setup (React + Vite)
 cd frontend
-
-2️⃣ Install dependencies
 npm install
-
-3️⃣ Start Vite dev server
 npm run dev
 
 
-
 Frontend runs at:
-
 👉 http://localhost:5173
 
-🔗 API Endpoints (Sample)
-Authentication
-POST /api/auth/register
-POST /api/auth/login
-
-Projects
-GET /api/projects
-POST /api/projects
-GET /api/projects/{id}
-
-Tasks
-GET /api/projects/{id}/tasks
-POST /api/projects/{id}/tasks
-PUT /api/tasks/{id}
-DELETE /api/tasks/{id}
+Backend runs at:
+👉 http://localhost:8080
