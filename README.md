@@ -5,6 +5,7 @@ A Full-Stack Kanban Project Management System (Spring Boot + React)
 NebulaBoard is a modern, lightweight Trello-style project management tool built using React (Vite) for the frontend and Spring Boot for the backend.
 It supports user authentication, task tracking, project boards, admin controls, and real-time updates.
 
+
 ✅ Features
 🔐 Authentication & Security
 
@@ -15,6 +16,8 @@ Admin & User Roles
 Protected Routes (Frontend)
 
 Authentication Middleware
+
+
 
 🗂 Project & Task Management
 
@@ -28,6 +31,8 @@ Task updates stored in database
 
 User-specific boards
 
+
+
 🛠 Admin Panel
 
 View all users
@@ -35,6 +40,8 @@ View all users
 Manage all projects
 
 View analytics for tasks & activity
+
+
 
 🎨 Frontend (React + Vite)
 
@@ -47,6 +54,8 @@ Modern CSS styles
 API service layer with Axios
 
 Context-based Auth state
+
+
 
 ⚙ Backend (Spring Boot)
 
@@ -61,6 +70,8 @@ Service-layer architecture
 Exception handlers
 
 Modular and scalable structure
+
+
 
 🧱 Tech Stack
 Frontend:
@@ -89,6 +100,8 @@ MySQL / PostgreSQL
 
 Maven
 
+
+
 📁 Project Structure
 NebulaBoard/
 │── backend/               # Spring Boot backend
@@ -100,6 +113,8 @@ NebulaBoard/
     ├── src/
     ├── public/
     ├── package.json
+
+
 
 🚀 Running the Backend (Spring Boot)
 1️⃣ Navigate to backend folder
@@ -115,6 +130,7 @@ src/main/resources/application.properties
 mvn spring-boot:run
 
 
+
 Backend runs at:
 
 👉 http://localhost:8080
@@ -128,6 +144,7 @@ npm install
 
 3️⃣ Start Vite dev server
 npm run dev
+
 
 
 Frontend runs at:
