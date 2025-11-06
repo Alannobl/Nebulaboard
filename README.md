@@ -1,4 +1,5 @@
 NebulaBoard
+
 A Full-Stack Kanban Project Management System (Spring Boot + React)
 
 NebulaBoard is a modern, lightweight Trello-style project management tool built using React (Vite) for the frontend and Spring Boot for the backend.
