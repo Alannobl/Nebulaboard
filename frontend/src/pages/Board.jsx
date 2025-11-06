@@ -1,18 +1,15 @@
 import Header from '../layout/Header';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import dayjs from 'dayjs';
-
 import Unauthorized from '../components/Unauthorized';
-import { useAuth, isAdmin } from '../context/AuthProvider';
 import { api } from '../api';
 import '../styles/Board.css';
 
-
-// Works for both Axios ({data}) and fetch-wrapper (raw json)
+// Unwrap axios response
 const unwrap = (r) => (r && typeof r === 'object' && 'data' in r ? r.data : r);
 
-// very small toast util (uses the .toast-host container in index.html or a component)
+// Toast helper
 const pushToast = (msg, type = 'err') => {
   let host = document.querySelector('.toast-host');
   if (!host) {
@@ -24,15 +21,15 @@ const pushToast = (msg, type = 'err') => {
   el.className = `toast ${type === 'ok' ? 'ok' : 'err'}`;
   el.textContent = msg;
   host.appendChild(el);
-  setTimeout(() => { el.remove(); }, 2500);
+  setTimeout(() => el.remove(), 2500);
 };
 
 export default function Board() {
   const { id } = useParams();
-  const { user } = useAuth();
 
   const [alerts, setAlerts] = useState({ overdueCount: 0, dueSoonCount: 0 });
   const [cols, setCols] = useState({ todo: [], inProgress: [], done: [] });
+
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -40,22 +37,24 @@ export default function Board() {
     assigneeName: '',
     dueDate: '',
   });
+
   const [editing, setEditing] = useState(null);
 
-  const prioRank = { HIGH: 0, MEDIUM: 1, LOW: 2 };
-  const sortList = (list) =>
-    [...list].sort((a, b) => {
-      const ad = a.dueDate ? new Date(a.dueDate).getTime() : Number.POSITIVE_INFINITY;
-      const bd = b.dueDate ? new Date(b.dueDate).getTime() : Number.POSITIVE_INFINITY;
+  const prioRank = useMemo(() => ({ HIGH: 0, MEDIUM: 1, LOW: 2 }), []);
+
+  const sortList = useCallback((list) => {
+    return [...list].sort((a, b) => {
+      const ad = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+      const bd = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
       if (ad !== bd) return ad - bd;
       const ap = prioRank[a.priority] ?? 99;
       const bp = prioRank[b.priority] ?? 99;
       if (ap !== bp) return ap - bp;
       return (a.id || 0) - (b.id || 0);
     });
+  }, [prioRank]);
 
-  const loadTasks = () => {
-    if (!id) return Promise.resolve();
+  const loadTasks = useCallback(() => {
     return api
       .get(`/api/projects/${id}/tasks`)
       .then((r) => {
@@ -64,7 +63,7 @@ export default function Board() {
         let inProgress = sortList(tasks.inProgress || []);
         let done = sortList(tasks.done || []);
 
-        // Fallback demo if the project has no tasks
+        // If real backend has NO tasks, show demo tasks
         if (todo.length === 0 && inProgress.length === 0 && done.length === 0) {
           todo = sortList([
             {
@@ -112,14 +111,10 @@ export default function Board() {
 
         setCols({ todo, inProgress, done });
       })
-      .catch((e) => {
-        console.error('Error loading tasks:', e);
-        pushToast(`Error loading tasks: ${e.message || e}`);
-      });
-  };
+      .catch((e) => pushToast(`Error loading tasks: ${e.message}`));
+  }, [id, sortList]);
 
-  const loadAlerts = () => {
-    if (!id) return Promise.resolve();
+  const loadAlerts = useCallback(() => {
     return api
       .get(`/api/projects/${id}/alerts/summary`)
       .then((r) => {
@@ -129,27 +124,38 @@ export default function Board() {
           dueSoonCount: Number(data.dueSoonCount || 0),
         });
       })
-      .catch((e) => {
-        console.error('Error loading alerts:', e);
-        pushToast(`Error loading alerts: ${e.message || e}`);
-      });
-  };
-
-  const refresh = useCallback(() =>
-    Promise.all([loadTasks(), loadAlerts()]).catch((e) => pushToast(e.message || 'Failed to load')), [id]);
-
-  useEffect(() => {
-    if (id) refresh();
+      .catch((e) => pushToast(`Error loading alerts: ${e.message}`));
   }, [id]);
 
+  const refresh = useCallback(() => {
+    return Promise.all([loadTasks(), loadAlerts()]);
+  }, [loadTasks, loadAlerts]);
 
+  useEffect(() => {
+    refresh();
+  }, [id]);
 
+  // ✅ FIXED: Create Task with validation + working POST
   const createTask = (e) => {
     e.preventDefault();
-    if (!newTask.title.trim()) return;
+
+    if (!newTask.title.trim()) {
+      pushToast("Title is required");
+      return;
+    }
+    if (!newTask.assigneeName.trim()) {
+      pushToast("Assignee is required");
+      return;
+    }
+    if (!newTask.dueDate.trim()) {
+      pushToast("Due date is required");
+      return;
+    }
+
     api
       .post(`/api/projects/${id}/tasks`, newTask)
       .then(() => {
+        pushToast("Task created", "ok");
         setNewTask({
           title: '',
           description: '',
@@ -159,27 +165,35 @@ export default function Board() {
         });
         refresh();
       })
-      .catch((e) => pushToast(e.message || 'Create failed'));
+      .catch((e) => pushToast(`Create failed: ${e.message}`));
   };
 
-  const move = (taskId, status) =>
+  // ✅ Fixed Move Task
+  const move = (taskId, status) => {
     api
-      .patch(`/api/tasks/${taskId}/move`, { status, position: 1000 })
-      .then(() => refresh())
-      .catch((e) => pushToast(`Move failed: ${e.message}`));
-
-  const del = (taskId) => {
-    if (!confirm('Delete this task?')) return;
-    api
-      .delete(`/api/tasks/${taskId}`)
+      .patch(`/api/projects/${id}/tasks/${taskId}`, { status })
       .then(() => {
-        pushToast('Deleted', 'ok');
+        pushToast("Task moved", "ok");
+        refresh();
+      })
+      .catch((e) => pushToast(`Move failed: ${e.message}`));
+  };
+
+  // ✅ Fixed Delete Task
+  const del = (taskId) => {
+    if (!confirm("Delete this task?")) return;
+
+    api
+      .delete(`/api/projects/${id}/tasks/${taskId}`)
+      .then(() => {
+        pushToast("Task deleted", "ok");
         refresh();
       })
       .catch((e) => pushToast(`Delete failed: ${e.message}`));
   };
 
-  const openEdit = (t) =>
+  // Open edit dialog
+  const openEdit = (t) => {
     setEditing({
       id: t.id,
       title: t.title || '',
@@ -188,13 +202,17 @@ export default function Board() {
       priority: t.priority || 'MEDIUM',
       dueDate: t.dueDate || '',
     });
+  };
 
+  // ✅ Fixed Save Edit
   const saveEdit = (e) => {
     e.preventDefault();
     const { id: taskId, ...body } = editing;
+
     api
-      .put(`/api/tasks/${taskId}`, body)
+      .put(`/api/projects/${id}/tasks/${taskId}`, body)
       .then(() => {
+        pushToast("Task updated", "ok");
         setEditing(null);
         refresh();
       })
@@ -209,21 +227,7 @@ export default function Board() {
     if (diff < 0) return { text: 'Overdue', cls: 'danger' };
     if (diff <= 3) return { text: 'Due soon', cls: 'warn' };
     return { text: 'On track', cls: 'ok' };
-    // Note: dayjs is date-only here; adjust with time-of-day if needed.
   };
-
-  if (!id) {
-    return (
-      <>
-        
-        <div className="nb-container">
-          <div className="card card-body">
-            No project selected. <Link to="/app">Go to Projects</Link>.
-          </div>
-        </div>
-      </>
-    );
-  }
 
   return (
     <>
@@ -232,40 +236,24 @@ export default function Board() {
       <div className="nb-container">
         <div className="section-title">Board</div>
 
-        {/* small board meta */}
-        <div style={{ display: 'flex', gap: '10px', margin: '8px 0 16px' }}>
+        {/* Alerts */}
+        <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
           <span className="badge danger">Overdue: {alerts.overdueCount}</span>
           <span className="badge warn">Due soon: {alerts.dueSoonCount}</span>
-
-          {/* Use proxy-based URL so browser downloads work */}
-          <a
-            href={`/api/projects/${id}/tasks/export`}
-            target="_blank"
-            rel="noreferrer"
-            className="btn btn-ghost"
-            style={{ marginLeft: 'auto' }}
-          >
-            Export CSV
-          </a>
         </div>
 
-        {/* task creator */}
+        {/* Add Task Form */}
         <form onSubmit={createTask} className="card card-body" style={{ marginBottom: 16 }}>
           <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1.2fr 1fr .8fr .8fr .6fr' }}>
-            <input
-              className="input"
-              placeholder="Task title"
+            <input className="input" placeholder="Task title"
               value={newTask.title}
               onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
             />
-            <input
-              className="input"
-              placeholder="Description"
+            <input className="input" placeholder="Description"
               value={newTask.description}
               onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
             />
-            <select
-              className="select"
+            <select className="select"
               value={newTask.priority}
               onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
             >
@@ -273,30 +261,25 @@ export default function Board() {
               <option>MEDIUM</option>
               <option>HIGH</option>
             </select>
-            <input
-              className="input"
-              placeholder="Assignee"
+            <input className="input" placeholder="Assignee"
               value={newTask.assigneeName}
               onChange={(e) => setNewTask({ ...newTask, assigneeName: e.target.value })}
             />
-            <input
-              className="input"
-              type="date"
+            <input className="input" type="date"
               value={newTask.dueDate}
               onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
             />
           </div>
+
           <div style={{ marginTop: 12 }}>
-            <button className="btn btn-primary" type="submit">
-              Add Task
-            </button>
+            <button className="btn btn-primary" type="submit">Add Task</button>
             <button className="btn btn-ghost" type="button" onClick={refresh} style={{ marginLeft: 8 }}>
               Refresh
             </button>
           </div>
         </form>
 
-        {/* columns */}
+        {/* Columns */}
         <div className="board">
           <Column title="To-Do" items={cols.todo} move={move} del={del} openEdit={openEdit} dueInfo={dueInfo} />
           <Column title="In Progress" items={cols.inProgress} move={move} del={del} openEdit={openEdit} dueInfo={dueInfo} />
@@ -304,38 +287,30 @@ export default function Board() {
         </div>
       </div>
 
-      {/* edit modal (simple) */}
+      {/* Edit modal */}
       {editing && (
-        <div
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', display: 'grid', placeItems: 'center', zIndex: 50 }}
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', display: 'grid', placeItems: 'center', zIndex: 50 }}
           onClick={() => setEditing(null)}
         >
           <div className="card" style={{ width: 520 }} onClick={(e) => e.stopPropagation()}>
             <div className="card-body">
-              <div className="section-title" style={{ fontSize: 20, marginTop: 0 }}>
-                Edit Task
-              </div>
+              <div className="section-title" style={{ fontSize: 20 }}>Edit Task</div>
               <form onSubmit={saveEdit} style={{ display: 'grid', gap: 12 }}>
-                <input
-                  className="input"
+                <input className="input"
                   value={editing.title}
                   onChange={(e) => setEditing({ ...editing, title: e.target.value })}
                   required
                 />
-                <input
-                  className="input"
+                <input className="input"
                   value={editing.description}
                   onChange={(e) => setEditing({ ...editing, description: e.target.value })}
                 />
                 <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr .7fr .7fr' }}>
-                  <input
-                    className="input"
-                    placeholder="Assignee"
+                  <input className="input" placeholder="Assignee"
                     value={editing.assigneeName}
                     onChange={(e) => setEditing({ ...editing, assigneeName: e.target.value })}
                   />
-                  <select
-                    className="select"
+                  <select className="select"
                     value={editing.priority}
                     onChange={(e) => setEditing({ ...editing, priority: e.target.value })}
                   >
@@ -343,20 +318,14 @@ export default function Board() {
                     <option>MEDIUM</option>
                     <option>HIGH</option>
                   </select>
-                  <input
-                    className="input"
-                    type="date"
+                  <input className="input" type="date"
                     value={editing.dueDate || ''}
                     onChange={(e) => setEditing({ ...editing, dueDate: e.target.value })}
                   />
                 </div>
-                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 6 }}>
-                  <button type="button" className="btn btn-ghost" onClick={() => setEditing(null)}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn btn-primary">
-                    Save
-                  </button>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                  <button className="btn btn-ghost" type="button" onClick={() => setEditing(null)}>Cancel</button>
+                  <button className="btn btn-primary" type="submit">Save</button>
                 </div>
               </form>
             </div>
@@ -392,7 +361,9 @@ function TaskCard({ t, move, del, openEdit, dueInfo }) {
         <div>{t.title}</div>
         {due && t.status !== 'DONE' && <span className={`badge badge--${due.cls}`}>{due.text}</span>}
       </div>
+
       {t.description && <div style={{ color: 'var(--text-2)' }}>{t.description}</div>}
+
       <div className="card__meta">
         {t.assigneeName && <span className="badge">{t.assigneeName}</span>}
         <span className={`badge badge--${t.priority === 'HIGH' ? 'danger' : t.priority === 'MEDIUM' ? 'warn' : 'ok'}`}>
@@ -400,28 +371,19 @@ function TaskCard({ t, move, del, openEdit, dueInfo }) {
         </span>
         {t.dueDate && <span className="badge">Due: {t.dueDate}</span>}
       </div>
+
       <div className="card__footer">
         {t.status !== 'TODO' && (
-          <button className="btn btn--ghost" onClick={() => move(t.id, 'TODO')}>
-            To-Do
-          </button>
+          <button className="btn btn--ghost" onClick={() => move(t.id, 'TODO')}>Move to To-Do</button>
         )}
         {t.status !== 'IN_PROGRESS' && (
-          <button className="btn btn--ghost" onClick={() => move(t.id, 'IN_PROGRESS')}>
-            In-Progress
-          </button>
+          <button className="btn btn--ghost" onClick={() => move(t.id, 'IN_PROGRESS')}>Move to In-Progress</button>
         )}
         {t.status !== 'DONE' && (
-          <button className="btn btn--ghost" onClick={() => move(t.id, 'DONE')}>
-            Done
-          </button>
+          <button className="btn btn--ghost" onClick={() => move(t.id, 'DONE')}>Move to Done</button>
         )}
-        <button className="btn btn--ghost" onClick={() => openEdit(t)}>
-          Edit
-        </button>
-        <button className="btn btn--danger" onClick={() => del(t.id)}>
-          Delete
-        </button>
+        <button className="btn btn--ghost" onClick={() => openEdit(t)}>Edit</button>
+        <button className="btn btn--danger" onClick={() => del(t.id)}>Delete</button>
       </div>
     </div>
   );

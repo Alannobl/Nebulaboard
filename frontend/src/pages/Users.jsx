@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { get, del } from '../api/client';
-import { useAuth } from '../context/AuthProvider';
+import { useAuth } from '../context/useAuth';
+import { isAdmin } from '../utils/auth';
 
 export default function Users(){
   const { user } = useAuth();
@@ -8,13 +9,10 @@ export default function Users(){
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     setErr('');
     if (!user) return;
-    const isAdmin = user?.role === 'ADMIN' ||
-                    (Array.isArray(user?.authorities) && user.authorities.includes('ROLE_ADMIN')) ||
-                    (Array.isArray(user?.roles) && user.roles.includes('ROLE_ADMIN'));
-    if (!isAdmin) {
+    if (!isAdmin(user)) {
       // Show only current user
       setRows([user]);
       return;
@@ -31,11 +29,11 @@ export default function Users(){
     } catch (e) {
       setErr(e.message || 'Failed to load users');
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     loadUsers();
-  }, [user]);
+  }, [loadUsers]);
 
   const handleDeleteUser = async (userId, username) => {
     if (!confirm(`Are you sure you want to delete user "${username}"?`)) return;

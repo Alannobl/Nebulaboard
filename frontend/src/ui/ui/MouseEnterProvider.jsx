@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
-
-const MouseEnterContext = React.createContext();
+import { MouseEnterContext } from './MouseEnterContext';
 
 export function MouseEnterProvider({ children }) {
   const [isMouseEntered, setIsMouseEntered] = useState(false);
@@ -15,13 +14,4 @@ export function MouseEnterProvider({ children }) {
       {children}
     </MouseEnterContext.Provider>
   );
-}
-
-export function useMouseEnter() {
-  const context = React.useContext(MouseEnterContext);
-  if (!context) {
-    console.error("useMouseEnter called outside MouseEnterProvider");
-    throw new Error('useMouseEnter must be used within a MouseEnterProvider');
-  }
-  return context;
 }

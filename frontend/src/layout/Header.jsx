@@ -1,7 +1,8 @@
 // frontend/src/components/Header.jsx
 import React from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthProvider'
+import { useAuth } from '../context/useAuth'
+import { isAdmin } from '../utils/auth'
 
 export default function Header() {
   const { user, logout } = useAuth()
@@ -12,7 +13,7 @@ export default function Header() {
     navigate('/login', { replace: true })
   }
 
-  const isAdmin = !!user?.roles?.some(r => r === 'ROLE_ADMIN' || r === 'ADMIN')
+  const admin = isAdmin(user)
 
   return (
     <header className="app-bar">
@@ -24,7 +25,7 @@ export default function Header() {
         <NavLink to="/app" aria-current={({isActive}) => isActive ? 'page' : undefined}>
           Projects
         </NavLink>
-        {isAdmin && (
+        {admin && (
           <NavLink to="/admin" aria-current={({isActive}) => isActive ? 'page' : undefined}>
             Admin
           </NavLink>
@@ -33,7 +34,7 @@ export default function Header() {
         {user ? (
           <>
             <span className="badge">
-              {user.username} · {isAdmin ? 'ADMIN' : 'USER'}
+              {user.username} · {admin ? 'ADMIN' : 'USER'}
             </span>
             <button className="btn btn--ghost" onClick={onLogout}>
               Logout

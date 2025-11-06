@@ -1,6 +1,6 @@
 // frontend/src/pages/admin/AdminHome.jsx
 import Header from './layout/Header'
-import { useAuth } from '../context/AuthProvider'
+import { useAuth } from '../context/useAuth'
 import { Link } from 'react-router-dom'
 import './styles/AdminHome.css'
 

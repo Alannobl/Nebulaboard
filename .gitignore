@@ -1,0 +1,21 @@
+# ===== BACKEND (SPRING BOOT) =====
+backend/target/
+backend/.settings/
+backend/.classpath
+backend/.project
+
+# ===== FRONTEND (REACT / VITE) =====
+frontend/node_modules/
+frontend/dist/
+
+# ===== IDE / EDITOR FILES =====
+.vscode/
+.metadata/
+.idea/
+
+# ===== SYSTEM FILES =====
+.DS_Store
+Thumbs.db
+
+# ===== LOG FILES =====
+*.log

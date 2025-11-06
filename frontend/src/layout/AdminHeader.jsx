@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthProvider';
+import { useAuth } from '../context/useAuth';
 
 export default function AdminHeader(){
   const { user, logout } = useAuth() || {};

@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
-import { useAuth, isAdmin } from '../context/AuthProvider';
+import { useAuth } from '../context/useAuth';
+import { isAdmin } from '../utils/auth';
 
 export function RequireAuth({ children }) {
   const { user, loading } = useAuth();

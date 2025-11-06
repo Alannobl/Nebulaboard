@@ -1,7 +1,6 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { authFetch } from '../api/client';
-
-export const AuthContext = createContext({});
+import { AuthContext } from './AuthContext';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -19,6 +18,7 @@ export function AuthProvider({ children }) {
         const me = await authFetch('/api/auth/me').then(r => r.json());
         setUser(me);
       } catch (e) {
+        console.error('Error fetching user:', e);
         // If the token is invalid or expired, clear it
         localStorage.removeItem('token');
         localStorage.removeItem('username');
@@ -62,10 +62,4 @@ export function AuthProvider({ children }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
 
-export const isAdmin = (user) =>
-  user?.role === 'ADMIN' ||
-  (Array.isArray(user?.authorities) && user.authorities.includes('ROLE_ADMIN'));

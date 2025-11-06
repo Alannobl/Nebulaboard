@@ -22,7 +22,9 @@ export async function authFetch(path, options = {}) {
           msg = j.error || j.message || text
         } catch { msg = text }
       }
-    } catch {}
+    } catch (e) {
+      console.error('Error parsing response:', e);
+    }
     throw new Error(msg)
   }
   return res

@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { register } from '../api/client';
-import { useAuth } from '../context/AuthProvider';
 import '../styles/Register.css';
 
 export default function Register() {
-  const { login, user } = useAuth();
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -45,7 +43,7 @@ export default function Register() {
         <div className="form-row">
           <label>Password</label>
           <input
-sti            className="input"
+            className="input"
             type="password"
             value={password}
             onChange={e => setPassword(e.target.value)}

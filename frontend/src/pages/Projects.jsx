@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { get } from '../api/client';
-import { useAuth } from '../context/AuthProvider';
+import { useAuth } from '../context/useAuth';
 
 export default function Projects(){
   const { user } = useAuth();
@@ -20,7 +20,18 @@ export default function Projects(){
           : Array.isArray(payload?.data)    ? payload.data
           : Array.isArray(payload?.items)   ? payload.items
           : [];
-        if (alive) setItems(list);
+        if (alive) {
+          if (list.length === 0) {
+            // Mock data if no projects from API
+            setItems([
+              { id: 1, title: 'Sample Project 1', description: 'This is a sample project for demonstration.' },
+              { id: 2, title: 'Sample Project 2', description: 'Another sample project to show functionality.' },
+              { id: 3, title: 'Sample Project 3', description: 'Yet another project example.' },
+            ]);
+          } else {
+            setItems(list);
+          }
+        }
       } catch (e) {
         if (alive) setErr(e.message || 'Failed to load projects');
       }

@@ -1,4 +1,4 @@
-import { useAuth } from '../context/AuthProvider';
+import { useAuth } from '../context/useAuth';
 import { useEffect, useState } from 'react';
 import { get } from '../api/client';
 import '../styles/AdminHome.css';
